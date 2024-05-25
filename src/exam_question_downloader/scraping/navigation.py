@@ -13,7 +13,7 @@ from ..utils.consts import (
 logger = get_logger(APP_NAME)
 
 
-def magic_directories_journey(url, browser):
+def magic_directories_journey(url, browser, output_path=OUTPUT_PATH):
     logger.info(f"Visiting {url}")
     browser.get(url)
 
@@ -42,4 +42,4 @@ def magic_directories_journey(url, browser):
     elems = filter(lambda x: match_patterns(x, PDF_PATTERNS), elems)
     links = [e.get_attribute("href") for e in elems]
     for link in links:
-        download_file(link, OUTPUT_PATH, f"{uuid4()}.pdf")
+        download_file(link, output_path, f"{uuid4()}.pdf")

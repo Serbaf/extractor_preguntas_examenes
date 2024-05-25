@@ -3,15 +3,17 @@ import io
 import os
 import fitz
 import pytesseract
+import pandas as pd
 from PIL import Image
 from logutils import get_logger
-from ..utils.consts import APP_NAME
+from ..utils.consts import APP_NAME, SUBJECTS_PATTERNS
+from ..scraping.tools import match_patterns
 
-rgx_question = re.compile(r"\s*(\d{1,2})\s*[\.\)](.+)")
-rgx_answer_a = re.compile(r"\s*([aA])\s*[\.\)](.+)")
-rgx_answer_b = re.compile(r"\s*([bB])\s*[\.\)](.+)")
-rgx_answer_c = re.compile(r"\s*([cC])\s*[\.\)](.+)")
-rgx_answer_d = re.compile(r"\s*([dD])\s*[\.\)](.+)")
+rgx_question = re.compile(r"^\s*(\d{1,2})\s*[\.\)]\s*(.*?)\s*$")
+rgx_answer_a = re.compile(r"^\s*([aA])\s*[\.\)]\s*(.*?)\s*$")
+rgx_answer_b = re.compile(r"^\s*([bB])\s*[\.\)]\s*(.*?)\s*$")
+rgx_answer_c = re.compile(r"^\s*([cC])\s*[\.\)]\s*(.*?)\s*$")
+rgx_answer_d = re.compile(r"^\s*([dD])\s*[\.\)]\s*(.*?)\s*$")
 
 logger = get_logger(APP_NAME)
 
@@ -26,7 +28,7 @@ def get_textpage_ocr(page):
 def extract_questions_from_doc(doc):
     doc_lines = [l for l in doc.split("\n") if l.strip() != ""]
     problems = []
-    number = ""
+    number = None
     question = ""
     a = ""
     b = ""
@@ -34,51 +36,58 @@ def extract_questions_from_doc(doc):
     d = ""
     for i, l in enumerate(doc_lines):
         if len(d) > 0:
-            if (m := rgx_question.match(l)) and (len(m.groups()) >=2):
-                logger.info(f"Appending to Question")
-                problems.append({"number": number, "question": question, "a": a, "b": b, "c": c, "d": d})
+            if m := rgx_question.match(l):
+                logger.info(f"Adding question:\nQuestion:{question}\na:{a}\nb:{b}\nc:{c}\nd:{d}")
+                problems.append({
+                    "number": rgx_question.match(question).groups()[0].strip(),
+                    "question": rgx_question.match(question).groups()[1].strip(),
+                    "a": rgx_answer_a.match(a).groups()[1],
+                    "b": rgx_answer_b.match(b).groups()[1],
+                    "c": rgx_answer_c.match(c).groups()[1],
+                    "d": rgx_answer_d.match(d).groups()[1]
+                })
                
-                number = m.groups()[1]
-                question = m.groups()[2]
+                question = l
+                logger.info(f"Question: {question}")
                 a = ""
                 b = ""
                 c = ""
                 d = ""
             else:
-                logger.info(f"Appending to D")
-                d += l
+                d = f"{d} {l}"
+                logger.info(f"Appending to D: {l}")
         elif len(c) > 0:
-            if rgx_answer_d.match(l):
-                logger.info(f"Appending to D")
+            if m := rgx_answer_d.match(l):
                 d = l
+                logger.info(f"D: {d}")
             else:
-                logger.info(f"Appending to C")
-                c += l
+                c = f"{c} {l}"
+                logger.info(f"Appending to C: {l}")
         elif len(b) > 0:
-            if rgx_answer_c.match(l):
-                logger.info(f"Appending to C")
+            if m := rgx_answer_c.match(l):
                 c = l
+                logger.info(f"C: {c}")
             else:
-                logger.info(f"Appending to B")
-                b += l
+                b = f"{b} {l}"
+                logger.info(f"Appending to B: {l}")
         elif len(a) > 0:
-            if rgx_answer_b.match(l):
-                logger.info(f"Appending to B")
+            if m := rgx_answer_b.match(l):
                 b = l
+                logger.info(f"B: {b}")
             else:
-                logger.info(f"Appending to A")
-                a += l
+                a = f"{a} {l}"
+                logger.info(f"Appending to A: {l}")
         elif len(question) > 0:
-            if rgx_answer_a.match(l):
-                logger.info(f"Appending to A")
+            if m := rgx_answer_a.match(l):
                 a = l
+                logger.info(f"A: {a}")
             else:
-                logger.info(f"Appending to Question")
-                question += l
+                question = f"{question} {l}"
+                logger.info(f"Appending to question: {question}")
         else:
-            if rgx_question.match(l):
-                logger.info(f"Appending to Question")
+            if m := rgx_question.match(l):
                 question = l
+                logger.info(f"Question: {question}")
             else:
                 continue
     return problems
@@ -106,3 +115,22 @@ def get_text_docs_from_dir(doc_dir):
             text_doc = f.read_text()
         text_docs.append((f.name, text_doc))
     return text_docs
+
+
+def classify_questions_by_subject(questions):
+    aux = []
+    for name, qd in questions:
+        if len(qd) > 0:
+            for q in qd:
+                for x in ("question", "a", "b", "c", "d"):
+                    if subject := match_patterns(q["question"], SUBJECTS_PATTERNS):
+                        break
+                q["doc"] = name
+                q["subject"] = subject
+                aux.append(q)
+        else:
+            pass
+    df = pd.DataFrame(aux)
+    df = df[~df["subject"].isna()]
+    df.reset_index(drop=True)
+    return df

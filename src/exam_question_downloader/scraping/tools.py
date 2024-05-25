@@ -16,10 +16,10 @@ def match_patterns(html_elem, patterns):
         text = html_elem
     else:
         text = html_elem.text
-    for rgx in patterns:
+    for rgx, subject in patterns:
         if rgx.match(text):
-            return True
-    return False
+            return subject
+    return None
 
 def do_with_delayed_retry(setup, *args):
     func, delay, retries, incremental = setup
