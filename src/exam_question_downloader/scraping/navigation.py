@@ -18,19 +18,22 @@ def magic_directories_journey(url, browser, output_path=OUTPUT_PATH):
     browser.get(url)
 
     # Recorrer carpetas anidadas
-    elems = do_with_delayed_retry(
-        (browser.find_elements, 0.5, 15, False),
-        By.XPATH,
-        "//div[@class='mwc_ele_carpeta']"
-    )
-    elems = filter(lambda x: match_patterns(x, DIR_PATTERNS), elems)
-    links = [e.find_element(By.XPATH, "./a").get_attribute("href") for e in elems]
-    for link in links:
-        browser.execute_script("window.open('');")
-        browser.switch_to.window(browser.window_handles[-1])
-        magic_directories_journey(link, browser)
-        browser.close()
-        browser.switch_to.window(browser.window_handles[0])
+    try:
+        elems = do_with_delayed_retry(
+            (browser.find_elements, 0.5, 15, False),
+            By.XPATH,
+            "//div[@class='mwc_ele_carpeta']"
+        )
+        elems = filter(lambda x: match_patterns(x, DIR_PATTERNS), elems)
+        links = [e.find_element(By.XPATH, "./a").get_attribute("href") for e in elems]
+        for link in links:
+            browser.execute_script("window.open('');")
+            browser.switch_to.window(browser.window_handles[-1])
+            magic_directories_journey(link, browser)
+            browser.close()
+            browser.switch_to.window(browser.window_handles[0])
+    except Exception:
+        logger.exception(f"Something failed at URL {url}")
 
     
     # Recorrer PDFs

@@ -2,6 +2,7 @@ import requests
 import re
 import functools
 import time
+from collections.abc import Iterable
 from pathlib import Path
 from logutils import get_logger
 from selenium.webdriver import Firefox
@@ -16,9 +17,16 @@ def match_patterns(html_elem, patterns):
         text = html_elem
     else:
         text = html_elem.text
-    for rgx, subject in patterns:
-        if rgx.match(text):
-            return subject
+
+    if isinstance(patterns[0], Iterable):
+        for rgx, subject in patterns:
+            if rgx.match(text):
+                return subject
+    else:
+        for rgx in patterns:
+            if rgx.match(text):
+                return True
+
     return None
 
 def do_with_delayed_retry(setup, *args):
