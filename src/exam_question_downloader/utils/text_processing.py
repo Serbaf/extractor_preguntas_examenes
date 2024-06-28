@@ -97,24 +97,28 @@ def get_text_docs_from_dir(doc_dir):
     for i, f in enumerate(doc_dir.iterdir()):
         if not f.is_file():
             continue
-        logger.info(f"File {f}")
-        if f.suffix == ".pdf":
-            doc = fitz.open(f)
-            text_doc = ""
-            for page in doc:
-                page_text = ""
-                page_text = page.get_text()
-                # If no text, try with OCR
-                if page_text.strip() == "":
-                    logger.info(f"OCR for {f}!")
-                    break
-                    # page_text = get_textpage_ocr(page)
-                else:
-                    text_doc += page_text
-        else:
-            text_doc = f.read_text()
+        text_doc = get_text_docs_from_file(f)
         text_docs.append((f.name, text_doc))
     return text_docs
+
+def get_text_docs_from_file(f):
+    logger.info(f"File {f}")
+    text_doc = ""
+    if f.suffix == ".pdf":
+        doc = fitz.open(f)
+        for page in doc:
+            page_text = ""
+            page_text = page.get_text()
+            # If no text, try with OCR
+            if page_text.strip() == "":
+                logger.info(f"OCR for {f}!")
+                break
+                # page_text = get_textpage_ocr(page)
+            else:
+                text_doc += page_text
+    else:
+        text_doc = f.read_text()
+    return text_doc
 
 
 def classify_questions_by_subject(questions):
@@ -125,6 +129,8 @@ def classify_questions_by_subject(questions):
                 for x in ("question", "a", "b", "c", "d"):
                     if subject := match_patterns(q["question"], SUBJECTS_PATTERNS):
                         break
+                    elif subject:= match_patterns(q["a"], SUBJECTS_PATTERNS):   # Para las preguntas que no tienen nada en el enunciado, p.ej.; "Señale la respuesta correcta:"
+                        break
                 q["doc"] = name
                 q["subject"] = subject
                 aux.append(q)
@@ -132,5 +138,25 @@ def classify_questions_by_subject(questions):
             pass
     df = pd.DataFrame(aux)
     df = df[~df["subject"].isna()]
+    df.reset_index(drop=True)
+    return df
+
+def get_questions_not_classified(questions):
+    aux = []
+    for name, qd in questions:
+        if len(qd) > 0:
+            for q in qd:
+                has_match=False
+                for x in ("question", "a", "b", "c", "d"):
+                    if subject := match_patterns(q["question"], SUBJECTS_PATTERNS):
+                        has_match=True
+                        break
+                if not has_match:
+                    q["doc"] = name
+                    aux.append(q)
+        else:
+            pass
+    df = pd.DataFrame(aux)
+    df = df[df["subject"].isna()]
     df.reset_index(drop=True)
     return df

@@ -2,8 +2,6 @@ import re
 from pathlib import Path
 
 APP_NAME = "exam_question_downloader"
-MAINTAINER_EMAIL = "spuche@upv.es"
-UPV_EDX_URL = "https://www.edx.org/es/search?q=UPValenciaX&tab=course"
 
 ROOT_DIR = Path(__file__).absolute().parent.parent.parent.parent
 ASSETS_DIR = ROOT_DIR.joinpath("assets")
@@ -51,8 +49,39 @@ RGX24 = (re.compile(r".*((39\/2015)|([Pp]rocedimiento.*[Aa]dministrativo.*[Cc]om
 RGX25 = (re.compile(r".*((40\/2015)|([Rr][ée]gimen.*[Jj]ur[íi]dico.*[Ss]ector.*[Pp][úu]blico)).*"), "Régimen Jurídico Sector Público")
 RGX26 = (re.compile(r".*[Vv]iolencia.*[Dd]e.*[Gg][ée]nero.*"), "Viogen")
 RGX27 = (re.compile(r".*[Ee]statutos.*"), "Estatutos UPV")
+#  Preguntas MULTIMEDIA
+RGX30 = (re.compile(r".*Sakai.*"), "Sakai")
+RGX31 = (re.compile(r".*Poliformat.*"), "Poliformat")
+RGX32 = (re.compile(r".*MOOC.*"), "MOOC")
+RGX33 = (re.compile(r".*Learning Management System.*"), "LMS")
+RGX34 = (re.compile(r".*(([Oo]pen [Ee][Dd][Xx])|([Oo]pened[Xx])).*"), "Open edX")
+RGX35 = (re.compile(r".*libres de derechos.*"), "Creative Commons")
+RGX36 = (re.compile(r".*Riunet.*"), "Riunet") # Nota Riunet debe estar antes de opencast
+RGX37 = (re.compile(r".*((Polimedia)|(media\.upv\.es)|(Opencast)).*"), "Polimedia y Opencast") 
+RGX38 = (re.compile(r".*((H\.264)|(H\.265)|(YCbCr)|(MP3)|(audio digital)).*"), "Sistemas de audio y vídeo") 
+RGX39 = (re.compile(r".*((xAPI)|(Experience API)).*"), "LMS")
+RGX40 = (re.compile(r".*((LTI)|(learning analytics)).*"), "LMS")
+# Inteligencia artificial y realidad virtual
+RGX41 = (re.compile(r".*((inteligencia artificial)|(realidad virtual)).*"), "IA y realidad virtual") 
+# HTML, CSS y Javascript
+RGX42 = (re.compile(r".*((HTML)|(CSS)|([Jj]ava[Ss]cript)).*"), "HTML, CSS o Javascript") 
+# Preguntas REDES
+RGX50 = (re.compile(r".*IPv4.*"), "Redes - IPv4") 
+RGX51 = (re.compile(r".*IPv6.*"), "Redes - IPv6") 
+RGX52 = (re.compile(r".*VPN.*"), "Redes - VPN") 
+RGX53 = (re.compile(r".*((TCP\/IP)|( TCP )|( IP )).*"), "Redes")
+RGX54 = (re.compile(r".*((DNS)|(ICMP)).*"), "Redes")
+# Preguntas SISTEMAS
+RGX60 = (re.compile(r".*((UNIX)|([Uu]nix)|([Ll]inux)).*"), "Sistemas - Linux") 
+RGX61 = (re.compile(r".*((Windows 10)|(Windows 11)|(TPM)|([Bb]it[Ll]ocker)).*"), "Sistemas - Windows 10 y Windows 11") 
+RGX62 = (re.compile(r".*(([Cc]ontenedor)|([Dd]ocker)|(Kubernetes)|(Open[Ss]tack)|(Open[Nn]ebula)|(Proxmox)).*"), "Sistemas - Contenedores")
+
+
+
 
 DIR_PATTERNS = [RGX_CODIGOS, RGX_EJERCICIO]
 PDF_PATTERNS = [RGX_EXAMEN, RGX_EJERCICIO]
 SUBJECTS_PATTERNS = [RGX0, RGX1, RGX2, RGX3, RGX4, RGX5, RGX6, RGX7, RGX8, RGX9, RGX10, RGX11, RGX12, RGX13, RGX14, RGX15, RGX16, RGX17, RGX18, RGX19,
-    RGX20, RGX21, RGX22, RGX23, RGX24, RGX25, RGX26, RGX27]
+    RGX20, RGX21, RGX22, RGX23, RGX24, RGX25, RGX26, RGX27, RGX30, RGX31, RGX32, RGX33, RGX34, RGX35, RGX36, RGX37, RGX38, RGX39, RGX40, RGX41, RGX42,
+    RGX50, RGX51, RGX52, RGX53, RGX54,
+    RGX60, RGX61, RGX62]
